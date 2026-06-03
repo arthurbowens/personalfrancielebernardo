@@ -123,20 +123,19 @@
 .hero__photo {
   position: relative;
   width: 100%;
+  height: min(78dvh, 36rem);
   flex-shrink: 0;
-  overflow: hidden;
-  background: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  background: #121212;
   line-height: 0;
   margin-top: var(--header-offset);
 }
 
 .hero__photo::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 2.5rem;
-  background: linear-gradient(180deg, transparent, #0d0d0d);
-  pointer-events: none;
+  display: none;
 }
 
 .hero__photo::before {
@@ -145,13 +144,12 @@
 
 .hero__photo img {
   width: 100%;
-  height: auto;
-  min-height: 0;
-  max-height: none;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
-  object-position: center top;
+  object-position: center center;
   display: block;
-  vertical-align: top;
 }
 
 .hero__content {
