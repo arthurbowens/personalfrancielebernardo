@@ -22,6 +22,10 @@ html {
   scroll-behavior: smooth;
 }
 
+:root {
+  --header-offset: calc(4.75rem + env(safe-area-inset-top, 0px));
+}
+
 body {
   margin: 0;
   font-family: var(--font-body);
