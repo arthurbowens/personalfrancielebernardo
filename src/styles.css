@@ -1,3 +1,37 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import "tailwindcss";
+
+@theme {
+  --color-brand: #c782b8;
+  --color-brand-light: #d9a4cc;
+  --color-dark: #141414;
+  --color-dark-soft: #1e1e1e;
+  --color-concrete: #b8b8b8;
+  --color-concrete-dark: #8a8a8a;
+  --font-display: "Oswald", sans-serif;
+  --font-body: "Montserrat", sans-serif;
+  --font-signature: "Great Vibes", cursive;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--color-dark);
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
