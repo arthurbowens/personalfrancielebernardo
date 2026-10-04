@@ -382,12 +382,26 @@
       </div>
 
       @if (!chatDone()) {
+        @if (currentQuickReplies().length) {
+          <div class="chat-quick" role="group" aria-label="Respostas rápidas">
+            @for (reply of currentQuickReplies(); track reply) {
+              <button
+                type="button"
+                class="chat-quick__chip"
+                [disabled]="chatTyping()"
+                (click)="selectQuickReply(reply)"
+              >
+                {{ reply }}
+              </button>
+            }
+          </div>
+        }
         <form class="chat-panel__composer" (submit)="$event.preventDefault(); sendAnswer()">
           <input
             type="text"
             [value]="draftAnswer()"
             (input)="onDraftInput($event)"
-            placeholder="Mensagem..."
+            placeholder="Mensagem ou escolha acima..."
             autocomplete="off"
             [disabled]="chatTyping()"
             aria-label="Digite sua resposta"

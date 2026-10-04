@@ -11,6 +11,7 @@ interface ChatQuestion {
   key: string;
   label: string;
   question: string;
+  quickReplies?: string[];
 }
 
 @Component({
@@ -54,6 +55,13 @@ export class App {
       key: 'objetivo',
       label: 'Objetivo',
       question: 'Qual é o seu principal objetivo com os treinos?',
+      quickReplies: [
+        'Emagrecimento',
+        'Ganho de massa',
+        'Definição corporal',
+        'Condicionamento',
+        'Qualidade de vida',
+      ],
     },
     {
       key: 'experiencia',
@@ -69,16 +77,19 @@ export class App {
       key: 'frequencia',
       label: 'Frequência',
       question: 'Quantas vezes por semana você consegue treinar?',
+      quickReplies: ['2x', '3x', '4x', '5x ou mais'],
     },
     {
       key: 'duracao',
       label: 'Duração do treino',
       question: 'Quanto tempo você tem disponível por treino?',
+      quickReplies: ['30 min', '45 min', '1 hora', '1h30'],
     },
     {
       key: 'restricoes',
       label: 'Restrições',
       question: 'Possui alguma restrição médica, lesão ou dor que devemos considerar?',
+      quickReplies: ['Nenhuma', 'Dor nas costas', 'Dor no joelho', 'Outra (vou descrever)'],
     },
   ];
 
@@ -184,6 +195,22 @@ export class App {
   protected onDraftInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.draftAnswer.set(value);
+  }
+
+  protected currentQuickReplies(): string[] {
+    if (this.chatTyping() || this.chatDone()) {
+      return [];
+    }
+    return this.questions[this.chatStep()]?.quickReplies ?? [];
+  }
+
+  protected selectQuickReply(answer: string): void {
+    if (answer === 'Outra (vou descrever)') {
+      this.draftAnswer.set('');
+      return;
+    }
+    this.draftAnswer.set(answer);
+    this.sendAnswer();
   }
 
   protected sendAnswer(): void {
