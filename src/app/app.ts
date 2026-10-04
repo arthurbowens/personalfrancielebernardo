@@ -1,4 +1,17 @@
-import { Component, HostListener, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild, signal } from '@angular/core';
+
+type ChatRole = 'assistant' | 'user';
+
+interface ChatMessage {
+  role: ChatRole;
+  text: string;
+}
+
+interface ChatQuestion {
+  key: string;
+  label: string;
+  question: string;
+}
 
 @Component({
   selector: 'app-root',
@@ -6,12 +19,68 @@ import { Component, HostListener, signal } from '@angular/core';
   styleUrl: './app.css',
 })
 export class App {
+  @ViewChild('chatScroll') private chatScrollRef?: ElementRef<HTMLDivElement>;
+
   protected readonly headerSolid = signal(false);
   protected readonly currentYear = new Date().getFullYear();
+  protected readonly whatsappNumber = '554884926447';
   protected readonly whatsappUrl =
     'https://wa.me/554884926447?text=Ol%C3%A1%20Franciele!%20Gostaria%20de%20agendar%20uma%20aula%20experimental.';
   protected readonly instagramUrl = 'https://www.instagram.com/francielebernardopersonal';
   protected readonly instagramHandle = 'francielebernardopersonal';
+  protected readonly profilePhoto = '/foto2.jpeg';
+
+  protected readonly chatOpen = signal(false);
+  protected readonly chatTyping = signal(false);
+  protected readonly chatDone = signal(false);
+  protected readonly chatStep = signal(0);
+  protected readonly chatMessages = signal<ChatMessage[]>([]);
+  protected readonly chatAnswers = signal<Record<string, string>>({});
+  protected readonly draftAnswer = signal('');
+  protected readonly summaryWhatsappUrl = signal(this.whatsappUrl);
+
+  private readonly questions: ChatQuestion[] = [
+    {
+      key: 'nome',
+      label: 'Nome',
+      question: 'Oi! 💕 Eu sou a Franciele. Como você se chama?',
+    },
+    {
+      key: 'idade',
+      label: 'Idade',
+      question: 'Prazer em te conhecer! Qual é a sua idade?',
+    },
+    {
+      key: 'objetivo',
+      label: 'Objetivo',
+      question: 'Qual é o seu principal objetivo com os treinos?',
+    },
+    {
+      key: 'experiencia',
+      label: 'Experiência',
+      question: 'Há quanto tempo você treina?',
+    },
+    {
+      key: 'local_horario',
+      label: 'Local e horário',
+      question: 'Onde você pretende treinar e qual horário você tem livre?',
+    },
+    {
+      key: 'frequencia',
+      label: 'Frequência',
+      question: 'Quantas vezes por semana você consegue treinar?',
+    },
+    {
+      key: 'duracao',
+      label: 'Duração do treino',
+      question: 'Quanto tempo você tem disponível por treino?',
+    },
+    {
+      key: 'restricoes',
+      label: 'Restrições',
+      question: 'Possui alguma restrição médica, lesão ou dor que devemos considerar?',
+    },
+  ];
 
   protected readonly results = [
     { src: '/resultado1.jpeg', alt: 'Resultado de aluna 1' },
@@ -89,5 +158,130 @@ export class App {
   @HostListener('window:scroll')
   protected onWindowScroll(): void {
     this.headerSolid.set(window.scrollY > 60);
+  }
+
+  protected openChat(): void {
+    this.chatOpen.set(true);
+    if (this.chatMessages().length === 0) {
+      this.startChat();
+    }
+  }
+
+  protected closeChat(): void {
+    this.chatOpen.set(false);
+  }
+
+  protected restartChat(): void {
+    this.chatMessages.set([]);
+    this.chatAnswers.set({});
+    this.chatStep.set(0);
+    this.chatDone.set(false);
+    this.draftAnswer.set('');
+    this.summaryWhatsappUrl.set(this.whatsappUrl);
+    this.startChat();
+  }
+
+  protected onDraftInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.draftAnswer.set(value);
+  }
+
+  protected sendAnswer(): void {
+    const answer = this.draftAnswer().trim();
+    if (!answer || this.chatTyping() || this.chatDone()) {
+      return;
+    }
+
+    const step = this.chatStep();
+    const question = this.questions[step];
+    if (!question) {
+      return;
+    }
+
+    this.pushMessage('user', answer);
+    this.chatAnswers.update((answers) => ({ ...answers, [question.key]: answer }));
+    this.draftAnswer.set('');
+
+    const nextStep = step + 1;
+    if (nextStep < this.questions.length) {
+      this.chatStep.set(nextStep);
+      this.askQuestion(nextStep);
+      return;
+    }
+
+    this.finishChat();
+  }
+
+  private startChat(): void {
+    this.chatTyping.set(true);
+    this.scrollChatToBottom();
+
+    window.setTimeout(() => {
+      this.pushMessage(
+        'assistant',
+        'Oi! Sou a Franciele Bernardo 💪 Vou te fazer algumas perguntinhas rápidas pra te conhecer melhor e montar um caminho mais alinhado ao seu objetivo.',
+      );
+      this.chatTyping.set(false);
+      this.askQuestion(0);
+    }, 700);
+  }
+
+  private askQuestion(index: number): void {
+    const question = this.questions[index];
+    if (!question) {
+      return;
+    }
+
+    this.chatTyping.set(true);
+    this.scrollChatToBottom();
+
+    window.setTimeout(() => {
+      this.pushMessage('assistant', question.question);
+      this.chatTyping.set(false);
+      this.scrollChatToBottom();
+    }, 650);
+  }
+
+  private finishChat(): void {
+    const answers = this.chatAnswers();
+    const summaryLines = this.questions
+      .map((question) => `• ${question.label}: ${answers[question.key] ?? '-'}`)
+      .join('\n');
+
+    const message = [
+      'Olá Franciele! Acabei de responder o assistente da landing page.',
+      '',
+      summaryLines,
+      '',
+      'Gostaria de agendar uma aula experimental.',
+    ].join('\n');
+
+    this.summaryWhatsappUrl.set(`https://wa.me/${this.whatsappNumber}?text=${encodeURIComponent(message)}`);
+    this.chatTyping.set(true);
+    this.scrollChatToBottom();
+
+    window.setTimeout(() => {
+      this.pushMessage(
+        'assistant',
+        'Perfeito! Já tenho suas respostas ✨ Agora é só me chamar no WhatsApp pra gente agendar sua avaliação e começar sua transformação.',
+      );
+      this.chatTyping.set(false);
+      this.chatDone.set(true);
+      this.scrollChatToBottom();
+    }, 750);
+  }
+
+  private pushMessage(role: ChatRole, text: string): void {
+    this.chatMessages.update((messages) => [...messages, { role, text }]);
+    this.scrollChatToBottom();
+  }
+
+  private scrollChatToBottom(): void {
+    queueMicrotask(() => {
+      const el = this.chatScrollRef?.nativeElement;
+      if (el) {
+        el.scrollTop = el.scrollHeight;
+      }
+    });
   }
 }
